@@ -1,0 +1,17 @@
+name: mlzoomcamp
+dependencies:
+  - python ==3.11
+  - curl
+  - fastparquet
+  - jq
+  - jupyter
+  - matplotlib
+  - pandas
+  - pre-commit
+  - r-base
+  - r-matlib
+  - r-tidyverse
+  - scikit-learn
+  - scipy
+  - seaborn
+  - xgboost
