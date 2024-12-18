@@ -1,0 +1,21 @@
+2. Documentation
+(a) README.md
+# Straight vs Curly Hair Type Model Deployment
+
+This repository contains the implementation and deployment of the Straight vs Curly Hair Type model to AWS Lambda.
+
+## Overview
+
+1. **Model Conversion:** Convert the Keras model to TF-Lite format.
+2. **Image Preprocessing:** Code for downloading, resizing, and normalizing images.
+3. **Lambda Function:** Python function to load the model and make predictions.
+4. **Docker Setup:** Create a Docker image for the Lambda function.
+
+## Prerequisites
+
+- Python 3.10
+- Docker
+- AWS CLI (optional, for deployment)
+
+## File Structure
+
