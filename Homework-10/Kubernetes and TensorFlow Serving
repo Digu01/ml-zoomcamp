@@ -1,0 +1,129 @@
+Homework 10: Deploying the Bank Marketing Model to Kubernetes
+This assignment involves deploying the Bank Marketing model from Homework 5 using Kubernetes. The model is packaged as a Docker image and deployed to a local Kubernetes cluster created using kind. The following steps will guide you through building, deploying, testing, and scaling the model.
+
+1. Prerequisites
+Ensure you have the following tools installed on your machine:
+
+Docker (Installation Guide)
+Python 3.x
+Git (Installation Guide)
+kubectl (Installation Guide)
+kind (Quick Start Guide)
+
+
+docker --version
+python --version
+git --version
+kubectl version --client
+kind --version
+
+
+2. Clone the Repository
+Clone the course repository to access the code and resources:
+git clone https://github.com/DataTalksClub/machine-learning-zoomcamp.git
+cd machine-learning-zoomcamp/cohorts/2024/05-deployment/homework
+
+
+3. Build the Docker Image
+The Dockerfile is already provided in the folder. Build the image locally using the following command:
+docker build -t zoomcamp-model:3.11.5-hw10 .
+Alternatively, pull the prebuilt image from Docker Hub:
+docker pull svizor/zoomcamp-model:3.11.5-hw10
+
+4. Test the Model Locally
+Run the Docker container locally to test the model:
+docker run -it --rm -p 9696:9696 zoomcamp-model:3.11.5-hw10
+In another terminal, test the model using q6_test.py: python q6_test.py
+Expected output: {'has_subscribed': True, 'has_subscribed_probability': 0.287}
+
+
+5. Set Up Kubernetes with kind
+Create a local Kubernetes cluster using kind: kind create cluster
+Check the cluster's status: kubectl cluster-info
+
+
+6. Load Docker Image into kind Cluster
+Make the local Docker image available in the kind cluster:  kind load docker-image zoomcamp-model:3.11.5-hw10
+
+
+7. Create Deployment
+Write the deployment.yaml file to define the model deployment:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription
+spec:
+  selector:
+    matchLabels:
+      app: subscription
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: subscription
+    spec:
+      containers:
+      - name: subscription
+        image: zoomcamp-model:3.11.5-hw10
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"            
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 9696
+Apply the deployment: kubectl apply -f deployment.yaml
+Verify that the pod is running: kubectl get pods
+
+
+8. Create a Service
+Write the service.yaml file to expose the deployment:
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscription-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: subscription
+  ports:
+  - port: 80
+    targetPort: 9696
+
+Apply the service: kubectl apply -f service.yaml
+Check the service status: kubectl get services
+
+
+9. Test the Service
+To test the service locally, forward port 9696 to the service's port 80: kubectl port-forward service/subscription-service 9696:80
+Run the q6_test.py script again: python q6_test.py
+Expected output: {'has_subscribed': True, 'has_subscribed_probability': 0.287}
+
+
+10. Enable Autoscaling (Optional)
+Create a Horizontal Pod Autoscaler (HPA) to scale the deployment based on CPU usage: kubectl autoscale deployment subscription --name subscription-hpa --cpu-percent=20 --min=1 --max=3
+Monitor the HPA status: kubectl get hpa
+
+
+11. Simulate Load and Test Autoscaling
+Modify the q6_test.py script to generate a constant load: 
+from time import sleep
+import requests
+
+url = "http://localhost:9696/predict"
+client = {"age": 25, "job": "blue-collar", "marital": "married"}
+
+while True:
+    sleep(0.1)
+    response = requests.post(url, json=client).json()
+    print(response)
+
+Run the script and monitor the HPA: kubectl get hpa subscription-hpa --watch
+The HPA should scale the deployment to a maximum of 3 replicas.
+
+
+Conclusion
+This document provides a complete guide to building, deploying, and testing the Bank Marketing model on Kubernetes. Follow the steps carefully and ensure all configurations (e.g., deployment.yaml and service.yaml) are correctly applied. Let us know if you encounter issues during deployment or testing!
+
